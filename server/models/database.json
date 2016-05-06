@@ -1,0 +1,15 @@
+{
+  "development": {
+    "user": "root",
+    "password": "student",
+    "database": "484project",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+
+  "production": {
+    "driver": "mysql",
+    "user": "root",
+    "database": "484project"
+  }
+}
