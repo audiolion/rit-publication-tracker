@@ -52,7 +52,7 @@ exports.findById = function(id, callback) {
       return;
     }
 
-    var sql = "SELECT * FROM users WHERE id = " + conn.escapeId(id);
+    var sql = "SELECT * FROM users WHERE id = " + id;
 
     conn.query(sql, function(err, rows){
       conn.release();
@@ -74,7 +74,7 @@ exports.findByEmail = function(email, callback) {
       return;
     }
 
-    var sql = "SELECT id, fName, lName, email FROM users WHERE email = " + conn.escapeId(email);
+    var sql = "SELECT id, fName, lName, email FROM users WHERE email REGEXP '.*" + email + ".*'";
 
     conn.query(sql, function(err, rows){
       conn.release();
@@ -96,7 +96,7 @@ exports.findByName = function(name, callback) {
       return;
     }
 
-    var sql = "SELECT id, CONCAT(fName, ' ', lName) AS name, email FROM users WHERE name LIKE " + conn.escapeId(name);
+    var sql = "SELECT id, CONCAT(fName, ' ', lName) AS name, email FROM users WHERE CONCAT_WS(' ',fName,lName) REGEXP '" + name + "'";
 
     conn.query(sql, function(err, rows){
       conn.release();
@@ -118,16 +118,42 @@ exports.addUser = function(user, callback) {
       return;
     }
 
-    var sql = "INSERT INTO users (fName, lName, password, email) VALUES (" + conn.escapeId(user.fName) + "," + conn.escapeId(user.lName) + "," + conn.escapeId(user.password) + "," + conn.escapeId(user.email) + ")";
-
-    conn.query(sql, function(err, rows){
-      conn.release();
+    conn.beginTransaction(function(err) {
       if(err){
-        console.log(err);
-        callback(true);
-        return;
+        throw err;
       }
-      callback(false, { message: "User added" });
+
+      var sqlId = "SELECT MAX(id) AS id FROM users";
+
+      var pid;
+      conn.query(sqlId, function(err, id){
+        if(err){
+          return conn.rollback(function(){
+            throw err;
+          });
+        }
+        pid = id[0].id;
+        pid = pid + 1;
+
+        var sql = "INSERT INTO users (id, fName, lName, password, email) VALUES (" + pid + ",'" + user.fName + "','" + user.lName + "','" + user.password + "','" + user.email + "')";
+        console.log(sql);
+        conn.query(sql, function(err, rows){
+          if(err){
+              return conn.rollback(function(){
+                throw err;
+              });
+          }
+          conn.commit(function(err){
+            conn.release();
+            if(err){
+              return conn.rollback(function(){
+                throw err;
+              });
+            }
+            callback(false, { message: "User added" });
+          });
+        });
+      });
     });
   });
 };
@@ -140,7 +166,7 @@ exports.updateById = function(id, user, callback) {
       return;
     }
 
-    var sql = "UPDATE users SET email = " + conn.escapeId(user.email) + ", password = " + conn.escapeId(user.password) + "WHERE id = " + conn.escapeId(id);
+    var sql = "UPDATE users SET email = '" + user.email + "', password = '" + user.password + "' WHERE id = " + id;
 
     conn.query(sql, function(err, rows){
       conn.release();
@@ -162,16 +188,14 @@ exports.removeById = function(id, user, callback) {
       return;
     }
 
-    var sql = "DELETE FROM users WHERE id = '" + id + "'";
+    var sql = "DELETE FROM users WHERE id = " + id;
 
     conn.query(sql, function(err, rows){
       conn.release();
       if(err){
-        console.log(err);
-        callback(true);
-        return;
+        throw err;
       }
-      callback(false, { message: "User deleted" });
+      console.log('deleted ' + result.affectedRows + ' rows');
     });
   });
 };
@@ -556,19 +580,19 @@ exports.addPaper = function(paper, callback) {
             sql = "INSERT INTO authorship (userId, paperId) VALUES (" + uid + "," + pid + ")";
 
             conn.query(sql, function(err, rows){
-              conn.release();
               if(err){
                 return conn.rollback(function(){
                   throw err;
                 });
               }
               conn.commit(function(err){
-              if(err){
-                return conn.rollback(function(){
-                  throw err;
-                });
-              }
-              callback(false, {message: "Paper added"});
+                conn.release();
+                if(err){
+                  return conn.rollback(function(){
+                    throw err;
+                  });
+                }
+                callback(false, {message: "Paper added"});
               });
             });
           });
