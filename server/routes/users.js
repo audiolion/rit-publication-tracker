@@ -70,7 +70,7 @@ router.put('/users/:uid', function(req, res) {
     if(err){
       res.status(401).send("Unsuccessful");
     }else{
-      res.json(rows);
+      res.status(201).json(rows);
     }
   });
 });
@@ -81,7 +81,7 @@ router.delete('/users/:uid', function(req, res) {
       if(err){
         res.status(401).send("Unsuccessful");
       }else{
-        res.status(204);
+        res.status(204).json(rows);
       }
   });
 });

@@ -78,7 +78,17 @@ router.put('/papers/:id', function(req, res) {
     if(err){
       res.status(401).send("ERR - Paper could not be updated");
     }else{
-      res.json(rows);
+      res.status(201).json(rows);
+    }
+  });
+});
+
+router.put('/papers/viewcount/:id', function(req, res){
+  db.updateViewcount(req.params.id, function(err, rows){
+    if(err){
+      res.status(401).send("ERR - Paper could not be updated");
+    }else{
+      res.status(201).json(rows);
     }
   });
 });

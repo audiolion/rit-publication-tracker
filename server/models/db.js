@@ -175,8 +175,8 @@ exports.updateById = function(id, user, callback) {
         callback(true);
         return;
       }
-      callback(false, { message: "Information updated" });
     });
+    callback(false, { message: "Information updated" });
   });
 };
 
@@ -197,6 +197,7 @@ exports.removeById = function(id, user, callback) {
       }
       console.log('deleted ' + result.affectedRows + ' rows');
     });
+    callback(false, { message: "User deleted"});
   });
 };
 
@@ -599,5 +600,25 @@ exports.addPaper = function(paper, callback) {
         });
       });
     });
+  });
+};
+
+exports.updateViewcount = function(id, callback){
+  pool.getConnection(function(err, conn){
+    if(err){
+      console.log(err);
+      callback(true);
+      return;
+    }
+
+    var sql = "UPDATE papers SET views = views + 1 WHERE id = " + id;
+
+    conn.query(sql, function(err, rows){
+      if(err){
+        throw err;
+      }
+    });
+
+    callback(false, {message: "Updated viewcount"});
   });
 };
