@@ -162,7 +162,7 @@ exports.removeById = function(id, user, callback) {
       return;
     }
 
-    var sql = "DELETE FROM users WHERE id = " + conn.escapeId(id);
+    var sql = "DELETE FROM users WHERE id = '" + id + "'";
 
     conn.query(sql, function(err, rows){
       conn.release();
@@ -224,7 +224,6 @@ exports.findTopPapers = function(top, callback) {
           callback(true);
           return;
         }
-        console.dir(authors);
         for(var i = 0; i < papers.length; i++){
           var pid = papers[i]['id'];
           var authorsArr = [];
@@ -235,9 +234,29 @@ exports.findTopPapers = function(top, callback) {
           }
           papers[i]['authors'] = authorsArr;
         }
-        console.dir(papers);
-        // TODO: add keywords
-        callback(false, papers);
+
+        sql = "SELECT id, keyword from paper_keywords WHERE id IN " + ids;
+
+        conn.query(sql, function(err, keywords){
+          if(err){
+            console.log(err);
+            callback(true);
+            return;
+          }
+
+          for(var i = 0; i < papers.length; i++){
+            var pid = papers[i]['id'];
+            var keywordsArr = [];
+            for(var j = 0; j < keywords.length; j++){
+              if(keywords[j]['id'] === pid){
+                keywordsArr.push(keywords[j]['keyword']);
+              }
+            }
+            papers[i]['keywords'] = keywordsArr;
+          }
+
+          callback(false, papers);
+        });
       });
     });
   });
@@ -251,7 +270,7 @@ exports.findPapersById = function(id, callback) {
       return;
     }
 
-    var sql = "SELECT id, title, abstract, citation, views FROM papers WHERE id = " + conn.escapeId(id);
+    var sql = "SELECT id, title, abstract, citation, views FROM papers WHERE id = '" + id +"'";
 
     conn.query(sql, function(err, rows){
       conn.release();
@@ -273,16 +292,60 @@ exports.findPapersByTitle = function(title, callback) {
       return;
     }
 
-    var sql = "SELECT id, title, abstract, citation CONCAT(fName, ' ', lName) AS author, email, keyword, views FROM papers INNER JOIN authorship ON papers.id = authorship.paperId INNER JOIN users ON users.id = authorship.userId INNER JOIN paper_keywords ON papers.id = paper_keywords.id WHERE title LIKE " + conn.escapeId(title);
+    var title_wild = "\%" + title + "\%";
 
-    conn.query(sql, function(err, rows){
-      conn.release();
+    var sql = "SELECT papers.id, title, abstract, citation views FROM papers WHERE title LIKE '" + title_wild + "' ORDER BY views DESC";
+    console.log(sql);
+    conn.query(sql, function(err, papers){
       if(err){
         console.log(err);
         callback(true);
         return;
       }
-      callback(false, rows);
+      
+      var ids = "(" + getValsByKey(papers, 'id').toString() + ")";
+      sql = "SELECT paperId AS id, CONCAT(fName, ' ', lName) AS author from authorship INNER JOIN users ON authorship.userId = users.id WHERE authorship.paperId IN " + ids;
+      
+      conn.query(sql, function(err, authors){
+        if(err){
+          console.log(err);
+          callback(true);
+          return;
+        }
+        for(var i = 0; i < papers.length; i++){
+          var pid = papers[i]['id'];
+          var authorsArr = [];
+          for(var j = 0; j < authors.length; j++){
+            if(authors[j]['id'] === pid){
+              authorsArr.push(authors[j]['author']);
+            }
+          }
+          papers[i]['authors'] = authorsArr;
+        }
+
+        sql = "SELECT id, keyword from paper_keywords WHERE id IN " + ids;
+
+        conn.query(sql, function(err, keywords){
+          if(err){
+            console.log(err);
+            callback(true);
+            return;
+          }
+
+          for(var i = 0; i < papers.length; i++){
+            var pid = papers[i]['id'];
+            var keywordsArr = [];
+            for(var j = 0; j < keywords.length; j++){
+              if(keywords[j]['id'] === pid){
+                keywordsArr.push(keywords[j]['keyword']);
+              }
+            }
+            papers[i]['keywords'] = keywordsArr;
+          }
+
+          callback(false, papers);
+        });
+      });
     });
   });
 };
@@ -295,20 +358,63 @@ exports.findPapersByKeywords = function(keywords, callback) {
       return;
     }
 
-    splitKeywords = replace(splitKeywords, /\s/g, '');
+    var splitKeywords = replace(keywords, /,\s+/g, ',');
     splitKeywords = replace(splitKeywords, /['"]/g, '');
-    splitKeywords = replace(splitKeywords, /,/g, '\',\'');
-    splitKeywords = "'" + splitKeywords + "'";
-    var sql = "SELECT id, title, abstract, citation, CONCAT(fName, ' ', lName) AS author, email, keyword FROM papers INNER JOIN authorship ON papers.id = authorship.paperId INNER JOIN users ON users.id = authorship.userId INNER JOIN paper_keywords ON papers.id = paper_keywords.id WHERE paper_keywords.keyword IN (" + conn.escapeId(splitKeywords) + ")";
+    splitKeywords = replace(splitKeywords, /,/g, '.*|.*');
+    splitKeywords = "'.*" + splitKeywords + "'";
 
-    conn.query(sql, function(err, rows){
-      conn.release();
+    var sql = "SELECT DISTINCT papers.id, title, abstract, citation FROM papers INNER JOIN paper_keywords ON papers.id = paper_keywords.id WHERE paper_keywords.keyword REGEXP " + splitKeywords + " ORDER BY views DESC";
+    console.log(sql);
+    conn.query(sql, function(err, papers){
       if(err){
         console.log(err);
         callback(true);
         return;
       }
-      callback(false, rows);
+      
+      var ids = "(" + getValsByKey(papers, 'id').toString() + ")";
+      sql = "SELECT paperId AS id, CONCAT(fName, ' ', lName) AS author from authorship INNER JOIN users ON authorship.userId = users.id WHERE authorship.paperId IN " + ids;
+      
+      conn.query(sql, function(err, authors){
+        if(err){
+          console.log(err);
+          callback(true);
+          return;
+        }
+        for(var i = 0; i < papers.length; i++){
+          var pid = papers[i]['id'];
+          var authorsArr = [];
+          for(var j = 0; j < authors.length; j++){
+            if(authors[j]['id'] === pid){
+              authorsArr.push(authors[j]['author']);
+            }
+          }
+          papers[i]['authors'] = authorsArr;
+        }
+
+        sql = "SELECT id, keyword from paper_keywords WHERE id IN " + ids;
+
+        conn.query(sql, function(err, keywords){
+          if(err){
+            console.log(err);
+            callback(true);
+            return;
+          }
+
+          for(var i = 0; i < papers.length; i++){
+            var pid = papers[i]['id'];
+            var keywordsArr = [];
+            for(var j = 0; j < keywords.length; j++){
+              if(keywords[j]['id'] === pid){
+                keywordsArr.push(keywords[j]['keyword']);
+              }
+            }
+            papers[i]['keywords'] = keywordsArr;
+          }
+
+          callback(false, papers);
+        });
+      });
     });
   });
 };
@@ -321,16 +427,65 @@ exports.findPapersByAuthor = function(name, callback) {
       return;
     }
 
-    var sql = "SELECT id, title, abstract, citation CONCAT(fName, ' ', lName) AS author, email, keyword FROM papers INNER JOIN authorship ON papers.id = authorship.paperId INNER JOIN users ON users.id = authorship.userId INNER JOIN paper_keywords ON papers.id = paper_keywords.id WHERE author LIKE " + conn.escapeId(name);
+    var splitName = replace(name, /,\s+/g, ',');
+    splitName = replace(splitName, /['"]/g, '');
+    splitName = replace(splitName, /,/g, '.*|.*');
+    splitName = "'.*" + splitName + "'";
 
-    conn.query(sql, function(err, rows){
-      conn.release();
+    console.log(splitName);
+
+    var sql = "SELECT DISTINCT papers.id, title, abstract, citation FROM papers INNER JOIN authorship ON papers.id = authorship.paperId INNER JOIN users ON authorship.userId = users.id WHERE CONCAT_WS(' ',fName,lName) REGEXP " + splitName + " ORDER BY views DESC";
+
+    conn.query(sql, function(err, papers){
       if(err){
         console.log(err);
         callback(true);
         return;
       }
-      callback(false, rows);
+      
+      var ids = "(" + getValsByKey(papers, 'id').toString() + ")";
+      sql = "SELECT paperId AS id, CONCAT(fName, ' ', lName) AS author from authorship INNER JOIN users ON authorship.userId = users.id WHERE authorship.paperId IN " + ids;
+      
+      conn.query(sql, function(err, authors){
+        if(err){
+          console.log(err);
+          callback(true);
+          return;
+        }
+        for(var i = 0; i < papers.length; i++){
+          var pid = papers[i]['id'];
+          var authorsArr = [];
+          for(var j = 0; j < authors.length; j++){
+            if(authors[j]['id'] === pid){
+              authorsArr.push(authors[j]['author']);
+            }
+          }
+          papers[i]['authors'] = authorsArr;
+        }
+
+        sql = "SELECT id, keyword from paper_keywords WHERE id IN " + ids;
+
+        conn.query(sql, function(err, keywords){
+          if(err){
+            console.log(err);
+            callback(true);
+            return;
+          }
+
+          for(var i = 0; i < papers.length; i++){
+            var pid = papers[i]['id'];
+            var keywordsArr = [];
+            for(var j = 0; j < keywords.length; j++){
+              if(keywords[j]['id'] === pid){
+                keywordsArr.push(keywords[j]['keyword']);
+              }
+            }
+            papers[i]['keywords'] = keywordsArr;
+          }
+
+          callback(false, papers);
+        });
+      });
     });
   });
 };
@@ -342,65 +497,83 @@ exports.addPaper = function(paper, callback) {
       callback(true);
       return;
     }
-    //needs to be a transaction
-    var sqlId = "SELECT MAX(id) AS id FROM papers";
 
-    var pid;
-    conn.query(sqlId, function(err, id){
+    
+    
+    conn.beginTransaction(function(err) {
       if(err){
-        console.log(err);
-        callback(true);
-        return;
+        throw err;
       }
-      pid = id;
-    });
 
-    pid = pid + 1;
+      var sqlId = "SELECT MAX(id) AS id FROM papers";
 
-    var sql = "INSERT INTO papers (id, title, abstract, citation) VALUES (" + conn.escapeId(id) + "," + conn.escapeId(paper.title) + "," + conn.escapeId(paper.abstract) + "," + conn.escapeId(paper.citation) + ")"
+      var pid;
+      conn.query(sqlId, function(err, id){
+        if(err){
+          return conn.rollback(function(){
+            throw err;
+          });
+        }
+        pid = id[0].id;
+        pid = pid + 1;
+        var sql = "INSERT INTO papers (id, title, abstract, citation) VALUES (" + pid + ",'" + paper.title + "','" + paper.abstract + "','" + paper.citation + "')"
+      
+        conn.query(sql, function(err, rows){
+          if(err){
+            return conn.rollback(function(){
+              throw err;
+            });
+          }
+          var keywords = replace(paper.keywords, /,\s+/g, ',');
+          keywords = keywords.split(",");
+          var keywords_formatted = "";
+          for(var i = 0; i < keywords.length; i++){
+            keywords_formatted += "(" + pid + "," + "'" + keywords[i] + "')";
+            if(i+1 < keywords.length){
+              keywords_formatted += ",";
+            }
+          }
 
-    conn.query(sql, function(err, rows){
-      if(err){
-        console.log(err);
-        callback(true);
-        return;
-      }
-    });
+          sql = "INSERT INTO paper_keywords (id, keyword) VALUES " + keywords_formatted;
+          
+          conn.query(sql, function(err, rows){
+            if(err){
+              return conn.rollback(function(){
+                throw err;
+              });
+            }
+          });
+          var sqlId = "SELECT id FROM users WHERE email = '" + paper.email + "'";
+          console.log(sql);
+          var uid;
+          conn.query(sqlId, function(err, id){
+            if(err){
+              return conn.rollback(function(){
+                throw err;
+              });
+            }
+            uid = id[0].id;
+            sql = "INSERT INTO authorship (userId, paperId) VALUES (" + uid + "," + pid + ")";
 
-    keywords = replace(paper.keywords, /(')[a-zA-Z].*?(')/, '(' + id + ',$1 through $99)');
-    splitKeywords = "'" + splitKeywords + "'";
-
-    sql = "INSERT INTO paper_keywords (id, keyword) VALUES " + keywords;
-
-    conn.query(sql, function(err, rows){
-      if(err){
-        console.log(err);
-        callback(true);
-        return;
-      }
-    });
-
-    sqlId = "SELECT id FROM users WHERE email = " + conn.escapeId(paper.email);
-    var uid;
-    conn.query(sqlId, function(err, id){
-      if(err){
-        console.log(err);
-        callback(true);
-        return;
-      }
-      uid = id;
-    });
-
-    sql = "INSERT INTO authorship (userId, paperId) VALUES (" + conn.escapeId(uid) + "," + conn.escapeId(pid) + ")";
-
-    conn.query(sql, function(err, rows){
-      conn.release();
-      if(err){
-        console.log(err);
-        callback(true);
-        return;
-      }
-      callback(false, {message: "Paper added"});
+            conn.query(sql, function(err, rows){
+              conn.release();
+              if(err){
+                return conn.rollback(function(){
+                  throw err;
+                });
+              }
+              conn.commit(function(err){
+              if(err){
+                return conn.rollback(function(){
+                  throw err;
+                });
+              }
+              callback(false, {message: "Paper added"});
+              });
+            });
+          });
+        });
+      });
     });
   });
 };
