@@ -7,7 +7,7 @@
 
 <div class="container">
   <div class="row main">
-    <div class='col-md-10 col-md-offset-1'>
+    <div class='col-lg-12 col-md-12 col-sm-12 col-xs-12'>
       <form>
         <div class="input-group">
           <div class="input-group-btn">
@@ -26,7 +26,7 @@
   </div>
 
   <div class="row main">
-    <div class='col-md-10 col-md-offset-1'>
+    <div class='col-lg-12 col-md-12 col-sm-12 col-xs-12'>
       <div class="panel panel-default" ng-show="main.noResults">
         <div class="panel-body">
           <h4>No results were found for '{{main.lastSearch.searchTerm}}' in the {{main.lastSearch.field}} field.</h4>
@@ -39,43 +39,39 @@
         <table class="table table-hover">
           <thead>
             <tr>
-              <th></th>
               <th>Title</th>
-              <th>Contributor</th>
+              <th>Authors</th>
+              <th>Keywords</th>
+              <th>Views</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr ng-repeat="result in main.results">
               <td>{{result.title}}</td>
-              <td>{{result.author}}</td>
-              <td>{{result.keyword}}</td>
-              <td>{{result.views}}</td></tr>
-              <td><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal{{result.id}}">Details</button></td>
+              <td>{{result.authors}}</td>
+              <td>{{result.keywords}}</td>
+              <td>{{result.views}}</td>
+              <td><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal{{result.id}}">Details</button>
               <div id="modal{{result.id}}" class="modal fade" role="dialog">
                 <div class="modal-dialog">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <a href="{{result.permalink}}"><h4>{{result.title}}</h4></a>
-                      <h4><small>{{result.author}}</small></h4>
+                      <h4>{{result.title}}</h4></a>
+                      <h4><small>{{result.authors}}</small></h4>
                     </div>
                     <div class="modal-body">
                       <p>{{result.abstract}}</p>
                       <hr>
-                      <!-- <h3><small>Comments:</small></h3>
-                      <div class="well well-sm" ng-repeat="comment in result.comments track by $index">
-                          {{comment}}
-                      </div>
-                       <textarea class="form-control" ng-model="main.comment" placeholder="Your comments here"></textarea>
                     </div>
                     <div class="modal-footer">
-                      <button type="button" class="btn btn-primary" ng-click="main.postComment(result,main.comment)">Add Comment</button>
                       <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-                    </div> -->
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>

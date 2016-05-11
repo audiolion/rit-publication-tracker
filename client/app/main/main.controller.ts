@@ -18,7 +18,7 @@ class MainController {
     this.searchTypes = [
       {
         display: 'Title',
-        endpoint: '/title'
+        endpoint: '/title/'
       },
       {
         display: 'Author',
@@ -26,7 +26,7 @@ class MainController {
       },
       {
         display: 'Keywords',
-        endpoint: '/keywords/'
+        endpoint: '/keyword/'
       }
      ];
     this.searchType = this.searchTypes[0];

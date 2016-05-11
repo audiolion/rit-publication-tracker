@@ -11,9 +11,13 @@ angular.module('publicationTrackerApp', [
 ])
   .config(function($routeProvider, $locationProvider) {
     $routeProvider
+      .when('/',{
+        access: { restricted: true }
+      })
       .otherwise({
         redirectTo: '/'
       });
 
     $locationProvider.html5Mode(true);
   });
+  

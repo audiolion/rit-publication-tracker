@@ -11,6 +11,11 @@ import errorHandler from 'errorhandler';
 import path from 'path';
 import config from './environment';
 import session from 'express-session';
+import passport from 'passport';
+import localStrategy from 'passport-local/lib/Strategy';
+import stampedPassport from './passport';
+import flash from 'connect-flash';
+
 
 export default function(app) {
   var env = app.get('env');
@@ -23,6 +28,14 @@ export default function(app) {
   app.use(bodyParser.json());
   app.use(methodOverride());
   app.use(cookieParser());
+  app.use(session({ 
+    secret: 'keyboardking',
+    resave: false,
+    saveUninitialized: false 
+  }));
+  app.use(passport.initialize());
+  app.use(passport.session());
+  app.use(flash());
 
   app.set('appPath', path.join(config.root, 'client'));
 

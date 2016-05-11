@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 
 var db = require('../models/db');
+var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
 
 /* GET users listing. */
 router.get('/users', function(req, res) {
@@ -44,21 +46,26 @@ router.get('/users/name/:name', function(req, res) {
   });
 });
 
-router.post('/users', function(req, res) {
-  var email = req.body.email;
-  var fName = req.body.fName;
-  var lName = req.body.lName;
-  var pass = req.body.password;
+router.post('/users/register', passport.authenticate('local-signup'), function(req, res) {
+  res.status(200).json({message: req.flash('signupMessage')});
+});
 
-  var user = {fName: fName, lName: lName, password: pass, email: email};
+router.post('/users/login', passport.authenticate('local-login'), function(req, res){
+  res.status(200).json({status: true});
+});
 
-  db.addUser(user, function(err, rows){
-    if(err){
-      res.status(401).send("Unsuccessful");
-    }else{
-      res.json(rows);
-    }
-  });
+router.get('/users/status', function(req, res){
+  if(!req.isAuthenticated()){
+    return res.status(200).json({status: false});
+  }
+  res.status(200).json({status: true});
+});
+
+router.get('/dashboard', function(req, res){
+  //return list of users publications
+  if(req.isAuthenticated()){
+    res.status(200).json({user: req.user});
+  }
 });
 
 router.put('/users/:uid', function(req, res) {

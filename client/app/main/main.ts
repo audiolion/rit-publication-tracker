@@ -6,6 +6,7 @@ angular.module('publicationTrackerApp')
       .when('/', {
         templateUrl: 'app/main/main.html',
         controller: 'MainController',
-        controllerAs: 'main'
+        controllerAs: 'main',
+        access: {restricted: true}
       });
   });

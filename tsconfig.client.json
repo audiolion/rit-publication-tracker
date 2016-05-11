@@ -10,6 +10,7 @@
     ],
     "files": [
         "client/app/app.ts",
+        "client/app/auth/auth.ts",
         "client/app/main/main.controller.ts",
         "client/app/main/main.ts",
         "client/components/footer/footer.directive.ts",
