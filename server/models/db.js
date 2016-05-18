@@ -52,9 +52,9 @@ exports.findById = function(id, callback) {
       return;
     }
 
-    var sql = "SELECT * FROM users WHERE id = " + id;
+    var sql = "SELECT * FROM users WHERE id = ?";
 
-    conn.query(sql, function(err, rows){
+    conn.query(sql, [id], function(err, rows){
       conn.release();
       if(err){
         console.log(err);
@@ -74,9 +74,9 @@ exports.findByEmail = function(email, callback) {
       return;
     }
     
-    var sql = "SELECT id, fName, lName, email, password FROM users WHERE email = '" + email + "'";
+    var sql = "SELECT id, fName, lName, email, password FROM users WHERE email = ?";
 
-    conn.query(sql, function(err, rows){
+    conn.query(sql, [email], function(err, rows){
       conn.release();
       if(err){
         console.log(err);
@@ -119,6 +119,8 @@ exports.addUser = function(user, callback) {
       return;
     }
 
+    var returnId;
+
     conn.beginTransaction(function(err) {
       if(err){
         throw err;
@@ -135,10 +137,11 @@ exports.addUser = function(user, callback) {
         }
         pid = id[0].id;
         pid = pid + 1;
+        returnId = pid;
 
-        var sql = "INSERT INTO users (id, fName, lName, password, email) VALUES (" + pid + ",'" + user.fName + "','" + user.lName + "','" + user.password + "','" + user.email + "')";
-        console.log(sql);
-        conn.query(sql, function(err, rows){
+        var sql = "INSERT INTO users (id, fName, lName, password, email) VALUES (?,?,?,?,?)";
+
+        conn.query(sql, [pid, user.fName, user.lName, user.password, user.email], function(err, rows){
           if(err){
               return conn.rollback(function(){
                 throw err;
@@ -151,7 +154,7 @@ exports.addUser = function(user, callback) {
                 throw err;
               });
             }
-            callback(false, { message: "User added" });
+            callback(false, {id: [returnId] });
           });
         });
       });
@@ -167,9 +170,9 @@ exports.updateById = function(id, user, callback) {
       return;
     }
 
-    var sql = "UPDATE users SET email = '" + user.email + "', password = '" + user.password + "' WHERE id = " + id;
+    var sql = "UPDATE users SET email = ?, password = ? WHERE id = ?";
 
-    conn.query(sql, function(err, rows){
+    conn.query(sql, [user.email, user.password, id], function(err, rows){
       conn.release();
       if(err){
         console.log(err);
@@ -181,7 +184,7 @@ exports.updateById = function(id, user, callback) {
   });
 };
 
-exports.removeById = function(id, user, callback) {
+exports.removeById = function(id, callback) {
   pool.getConnection(function(err, conn){
     if(err){
       console.log(err);
@@ -189,14 +192,14 @@ exports.removeById = function(id, user, callback) {
       return;
     }
 
-    var sql = "DELETE FROM users WHERE id = " + id;
+    var sql = "DELETE FROM users WHERE id = ?";
 
-    conn.query(sql, function(err, rows){
+    conn.query(sql, [id], function(err, rows){
+      console.log(sql);
       conn.release();
       if(err){
         throw err;
       }
-      console.log('deleted ' + result.affectedRows + ' rows');
     });
     callback(false, { message: "User deleted"});
   });
@@ -231,10 +234,12 @@ exports.findTopPapers = function(top, callback) {
       callback(true);
       return;
     }
+    top = parseInt(top);
+    console.log(typeof(top));
+    var sql = "SELECT papers.id, title, abstract, citation, views FROM papers ORDER BY views DESC LIMIT ?";
+    console.log(sql);
 
-    var sql = "SELECT papers.id, title, abstract, citation, views FROM papers ORDER BY views DESC LIMIT " + top;
-
-    conn.query(sql, function(err, papers){
+    conn.query(sql, [top], function(err, papers){
       if(err){
         console.log(err);
         callback(true);
@@ -299,9 +304,9 @@ exports.findPapersById = function(id, callback) {
       return;
     }
 
-    var sql = "SELECT id, title, abstract, citation, views FROM papers WHERE id = '" + id +"'";
+    var sql = "SELECT id, title, abstract, citation, views FROM papers WHERE id = ?";
 
-    conn.query(sql, function(err, rows){
+    conn.query(sql, [id], function(err, rows){
       conn.release();
       if(err){
         console.log(err);
@@ -323,7 +328,7 @@ exports.findPapersByTitle = function(title, callback) {
 
     var title_wild = "\%" + title + "\%";
 
-    var sql = "SELECT papers.id, title, abstract, citation, views FROM papers WHERE title LIKE '" + title_wild + "' ORDER BY views DESC";
+    var sql = "SELECT papers.id, title, abstract, citation, views FROM papers WHERE title LIKE " + pool.escape(title_wild) + " ORDER BY views DESC";
     console.log(sql);
     conn.query(sql, function(err, papers){
       if(err){
@@ -393,9 +398,9 @@ exports.findPapersByKeywords = function(keywords, callback) {
     var splitKeywords = replace(keywords, /,\s+/g, ',');
     splitKeywords = replace(splitKeywords, /['"]/g, '');
     splitKeywords = replace(splitKeywords, /,/g, '.*|.*');
-    splitKeywords = "'.*" + splitKeywords + "'";
+    splitKeywords = ".*" + splitKeywords;
 
-    var sql = "SELECT DISTINCT papers.id, title, abstract, citation, views FROM papers INNER JOIN paper_keywords ON papers.id = paper_keywords.id WHERE paper_keywords.keyword REGEXP " + splitKeywords + " ORDER BY views DESC";
+    var sql = "SELECT DISTINCT papers.id, title, abstract, citation, views FROM papers INNER JOIN paper_keywords ON papers.id = paper_keywords.id WHERE paper_keywords.keyword REGEXP " + pool.escape(splitKeywords) + " ORDER BY views DESC";
     console.log(sql);
     conn.query(sql, function(err, papers){
       if(err){
@@ -465,11 +470,9 @@ exports.findPapersByAuthor = function(name, callback) {
     var splitName = replace(name, /,\s+/g, ',');
     splitName = replace(splitName, /['"]/g, '');
     splitName = replace(splitName, /,/g, '.*|.*');
-    splitName = "'.*" + splitName + "'";
+    splitName = ".*" + splitName;
 
-    console.log(splitName);
-
-    var sql = "SELECT DISTINCT papers.id, title, abstract, citation, views FROM papers INNER JOIN authorship ON papers.id = authorship.paperId INNER JOIN users ON authorship.userId = users.id WHERE CONCAT_WS(' ',fName,lName) REGEXP " + splitName + " ORDER BY views DESC";
+    var sql = "SELECT DISTINCT papers.id, title, abstract, citation, views FROM papers INNER JOIN authorship ON papers.id = authorship.paperId INNER JOIN users ON authorship.userId = users.id WHERE CONCAT_WS(' ',fName,lName) REGEXP " + pool.escape(splitName) + " ORDER BY views DESC";
 
     conn.query(sql, function(err, papers){
       if(err){
@@ -554,9 +557,9 @@ exports.addPaper = function(paper, callback) {
         }
         pid = id[0].id;
         pid = pid + 1;
-        var sql = "INSERT INTO papers (id, title, abstract, citation, views) VALUES (" + pid + ",'" + paper.title + "','" + paper.abstract + "','" + paper.citation + "'," + 0 + ")"
+        var sql = "INSERT INTO papers (id, title, abstract, citation, views) VALUES (?,?,?,?,?)"
       
-        conn.query(sql, function(err, rows){
+        conn.query(sql, [pid, paper.title, paper.abstract, paper.citation, 0], function(err, rows){
           if(err){
             return conn.rollback(function(){
               throw err;
@@ -581,19 +584,19 @@ exports.addPaper = function(paper, callback) {
               });
             }
           });
-          var sqlId = "SELECT id FROM users WHERE email = '" + paper.email + "'";
+          var sqlId = "SELECT id FROM users WHERE email = ?";
           console.log(sql);
           var uid;
-          conn.query(sqlId, function(err, id){
+          conn.query(sqlId, [paper.email], function(err, id){
             if(err){
               return conn.rollback(function(){
                 throw err;
               });
             }
             uid = id[0].id;
-            sql = "INSERT INTO authorship (userId, paperId) VALUES (" + uid + "," + pid + ")";
+            sql = "INSERT INTO authorship (userId, paperId) VALUES (?,?)";
 
-            conn.query(sql, function(err, rows){
+            conn.query(sql, [uid, pid], function(err, rows){
               if(err){
                 return conn.rollback(function(){
                   throw err;
@@ -624,9 +627,11 @@ exports.updateViewcount = function(id, callback){
       return;
     }
 
-    var sql = "UPDATE papers SET views = views + 1 WHERE id = " + id;
+    // id = parseInt(id);
+    console.log(id, typeof(id));
+    var sql = "UPDATE papers SET views = views + 1 WHERE id = ?";
 
-    conn.query(sql, function(err, rows){
+    conn.query(sql, [id], function(err, rows){
       if(err){
         throw err;
       }

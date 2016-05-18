@@ -19,7 +19,7 @@ module.exports = function(passport) {
     passwordField: 'password',
     passReqToCallback: true
   },
-  function(req, email, password, fName, lName, done){
+  function(req, email, password, done){
     db.findByEmail(email, function(err, rows){
       if(err){
         return done(err);
@@ -30,11 +30,11 @@ module.exports = function(passport) {
         var newUser = new Object();
         newUser.email = email;
         newUser.password = password;
-        newUser.fName = fName;
-        newUser.lName = lName;
+        newUser.fName = req.body.fName;
+        newUser.lName = req.body.lName;
         db.addUser(newUser, function(err, rows){
           //newUser.id = rows.insertId;
-          return done(null, newUser);
+          return done(null, rows);
         });
       }
     });
@@ -53,14 +53,11 @@ module.exports = function(passport) {
         return done(err);
       }
       if(!rows.length){
-        console.log(rows, 'user not found');
         return done(null, false, req.flash('loginMessage', 'User not found'));
       }
       if(!(rows[0].password == password)){
-        console.log('password mismatch');
         return done(null, false, req.flash('loginMessage', 'Incorrect password'));
       }
-      console.log('nailed it');
       return done(null, rows[0]);
     });
   }));
