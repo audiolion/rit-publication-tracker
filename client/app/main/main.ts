@@ -7,6 +7,6 @@ angular.module('publicationTrackerApp')
         templateUrl: 'app/main/main.html',
         controller: 'MainController',
         controllerAs: 'main',
-        access: {restricted: true}
+        access: {restricted: false}
       });
   });

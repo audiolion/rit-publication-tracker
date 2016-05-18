@@ -4,3 +4,34 @@
   color: #000;
   padding: 0.2em 0;
 }
+
+h1, p, a, li {
+	font-family: 'Montserrat', sans-serif;
+}
+
+body {
+	padding-top: 65px;
+}
+
+.navbar#navy {
+  background: #4484CE;
+}
+
+.navbar#navy a {
+  color: #FFF;
+}
+
+.navbar#navy li>a {
+  color: #FFF;
+}
+
+.navbar#navy li.active>a {
+  color: #FFF;
+  background: #4484CE;
+  border: #FFF 1px solid;
+  box-shadow: 0 0 3px rgba(0,0,0,0.16);
+}
+
+@media only screen and (max-width: 766px) {
+  .collapsed {background-color: #f7f7f7;}
+}

@@ -5,7 +5,7 @@ angular.module('publicationTrackerApp')
 		$routeProvider
 			.when('/', {
 				title: 'Home',
-				access: {restricted: true}
+				access: {restricted: false}
 			})
 			.when('/login', {
 				title: 'Login',
