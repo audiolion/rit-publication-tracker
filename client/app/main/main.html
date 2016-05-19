@@ -52,12 +52,12 @@
               <td>{{result.authors}}</td>
               <td>{{result.keywords}}</td>
               <td>{{result.views}}</td>
-              <td><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal{{result.id}}">Details</button>
+              <td><button type="submit" class="btn btn-primary" data-toggle="modal" ng-click="main.putViewcount(result.id)" data-target="#modal{{result.id}}">Details</button>
               <div id="modal{{result.id}}" class="modal fade" role="dialog">
                 <div class="modal-dialog">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <h4>{{result.title}}</h4></a>
+                      <h4>{{result.title}}</h4>
                       <h4><small>{{result.authors}}</small></h4>
                     </div>
                     <div class="modal-body">

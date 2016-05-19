@@ -11,11 +11,12 @@
     "files": [
         "client/app/app.ts",
         "client/app/auth/auth.ts",
+        "client/app/dashboard/dashboard.controller.ts",
+        "client/app/dashboard/dashboard.ts",
         "client/app/main/main.controller.ts",
         "client/app/main/main.ts",
         "client/components/footer/footer.directive.ts",
         "client/components/modal/modal.service.ts",
-        "client/components/navbar/navbar.controller.ts",
         "client/components/navbar/navbar.directive.ts",
         "client/components/socket/socket.mock.ts",
         "client/components/socket/socket.service.ts",

@@ -47,7 +47,7 @@ router.get('/users/name/:name', function(req, res) {
 });
 
 router.post('/users/register', passport.authenticate('local-signup'), function(req, res) {
-  res.status(200).json({message: req.flash('signupMessage')});
+  res.status(200).json({status: true, message: req.flash('signupMessage')});
 });
 
 router.post('/users/login', passport.authenticate('local-login'), function(req, res){

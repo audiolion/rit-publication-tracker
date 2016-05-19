@@ -51,45 +51,7 @@ module.exports = function(grunt) {
       }
     },
     watch: {
-      ts: {
-        files: ['<%= yeoman.client %>/{app,components}/**/!(*.spec|*.mock).ts'],
-        tasks: ['ts:client']
-      },
-      ngconstant: {
-        files: ['<%= yeoman.server %>/config/environment/shared.js'],
-        tasks: ['ngconstant']
-      },
-      injectJS: {
-        files: [
-          '<%= yeoman.client %>/{app,components}/**/!(*.spec|*.mock).ts',
-          '!<%= yeoman.client %>/app/app.js'
-        ],
-        tasks: ['injector:scripts']
-      },
-      injectCss: {
-        files: ['<%= yeoman.client %>/{app,components}/**/*.css'],
-        tasks: ['injector:css']
-      },
-      jsTest: {
-        files: ['<%= yeoman.client %>/{app,components}/**/*.{spec,mock}.ts'],
-        tasks: ['newer:tslint:all', 'newer:ts:client_test', 'wiredep:test', 'karma']
-      },
-      gruntfile: {
-        files: ['Gruntfile.js']
-      },
-      
-      express: {
-        files: ['<%= yeoman.server %>/**/*.{js,json}'],
-        tasks: ['express:dev', 'wait'],
-        options: {
-          
-          spawn: false //Without this option specified express won't be reloaded
-        }
-      },
-      bower: {
-        files: ['bower.json'],
-        tasks: ['wiredep']
-      }
+     
     },
 
     // Make sure code styles are up to par and there are no obvious mistakes

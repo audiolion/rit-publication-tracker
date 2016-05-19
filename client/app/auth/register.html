@@ -1,9 +1,15 @@
 <div class="col-md-4 col-md-offset-4">
-<h1>Login</h1>
+<h1>Register</h1>
 <div ng-show="error" class="alert alert-danger">{{errorMessage}}</div>
-<form role="form" ng-submit="login()">
+<form role="form" ng-submit="register()">
     <div class="form-group">
         <input type="email" class="form-control" name="email" placeholder="Email" ng-model="loginForm.email" required>
+    </div>
+    <div class="form-group">
+        <input type="fName" class="form-control" name="fName" placeholder="First Name" ng-model="loginForm.fName" required>
+    </div>
+    <div class="form-group">
+        <input type="lName" class="form-control" name="lName" placeholder="Last Name" ng-model="loginForm.lName" required>
     </div>
     <div class="form-group">
         <input type="password" class="form-control" name="password" placeholder="Password" ng-model="loginForm.password" required>
@@ -11,5 +17,5 @@
     <button type="submit" class="btn btn-default" ng-disabled="disabled">Submit</button>
 </form>
 <ul class="col-md-2 col-md-offset-10">
-	<li><a href="/register">Register</a></li>
+	<li><a href="/login">Login</a></li>
 </ul>

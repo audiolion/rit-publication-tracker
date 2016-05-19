@@ -19,17 +19,17 @@ angular.module('publicationTrackerApp')
 				controller: 'LogoutController',
 				access: {restricted: true}
 			})
-			.when('/signup', {
-				title: 'Signup',
-				templateUrl: 'auth/signup.html',
+			.when('/register', {
+				title: 'Register',
+				templateUrl: 'auth/register.html',
 				controller: 'AuthController',
-				access: { restricted: false }
+				access: {restricted: false}
 			})
 			.when('/dashboard', {
 				title: 'Dashboard',
 				templateUrl: 'auth/dashboard.html',
 				controller: 'AuthController',
-				access: {restricted: false}
+				access: {restricted: true}
 			});
 	})
 	.run(function($rootScope, $location, $route, AuthService) {

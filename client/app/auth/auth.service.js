@@ -2,11 +2,15 @@ angular.module('publicationTrackerApp').factory('AuthService',
 	['$q', '$timeout','$http',
 	function($q, $timeout, $http){
 		var user = null;
+		var userId = null;
+		var username = "";
 
 		return ({
 			isLoggedIn: isLoggedIn,
+			getUserName: getUserName,
 			getUserStatus: getUserStatus,
-			login: login
+			login: login,
+			register: register
 		});
 
 		function isLoggedIn(){
@@ -15,6 +19,24 @@ angular.module('publicationTrackerApp').factory('AuthService',
 			}else{
 				return false;
 			}
+		}
+
+		function getUserName(){
+			if(username.length > 0){
+				return username;
+			}
+			if(user){
+				return $http.get('/api/users/id/' + userId)
+				.success(function(data){
+					console.dir(data);
+					username = data.fName;
+					return username;
+				})
+				.error(function(data){
+
+				});
+			}
+			return userId;
 		}
 
 		function getUserStatus(){
@@ -40,6 +62,8 @@ angular.module('publicationTrackerApp').factory('AuthService',
 				.success(function(data, status){
 					if(status === 200 && data.status){
 						user = true;
+						userId = data.id;
+						getUserName();
 						deferred.resolve();
 					}else{
 						user = false;
@@ -53,4 +77,30 @@ angular.module('publicationTrackerApp').factory('AuthService',
 
 			return deferred.promise;
 		}
+
+		function register(email, fName, lName, password) {
+			var deferred = $q.defer();
+			var sha1 = new Hashes.SHA1;
+			password = sha1.hex(password);
+			$http.post('/api/users/register',
+				{email: email, fName: fName, lName: lName, password: password})
+				.success(function(data, status){
+					if(status === 200 && data.status){
+						user = true;
+						userId = data.id;
+						getUserName();
+						deferred.resolve();
+					}else{
+						user = false;
+						deferred.reject();
+					}
+				})
+				.error(function(data){
+					user = false;
+					deferred.reject();
+				});
+
+			return deferred.promise;
+		}
+
 	}]);

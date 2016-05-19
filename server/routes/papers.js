@@ -58,12 +58,13 @@ router.get('/papers/keyword/:keywords', function(req, res) {
     if(err){
       res.status(400).send("No papers found");
     }else{
-      res.json(rows);
+      res.status(200).json(rows);
     }
   });
 });
 
 router.post('/papers/', function(req, res) {
+  
   db.addPaper(req.body, function(err, rows){
     if(err){
       res.status(400).send("ERR - Paper could not be added");
@@ -74,7 +75,7 @@ router.post('/papers/', function(req, res) {
 });
 
 router.put('/papers/:id', function(req, res) {
-  db.updatePaper(req.params.id, req.body, function(err, rows){
+  db.editPaper(req.params.id, req.body, function(err, rows){
     if(err){
       res.status(400).send("ERR - Paper could not be updated");
     }else{
@@ -89,6 +90,16 @@ router.put('/papers/viewcount/:id', function(req, res){
       res.status(400).send("ERR - Paper could not be updated");
     }else{
       res.status(201).json(rows);
+    }
+  });
+});
+
+router.delete('/papers/id/:id', function(req, res){
+  db.deletePaper(req.params.id, function(err, rows){
+    if(err){
+      res.status(400).send("ERR - Paper could not be deleted");
+    }else{
+      res.status(201).send("Paper deleted");
     }
   });
 });

@@ -619,6 +619,45 @@ exports.addPaper = function(paper, callback) {
   });
 };
 
+exports.editPaper = function(id, edits, callback){
+  pool.getConnection(function(err, conn){
+    if(err){
+      console.log(err);
+      callback(true);
+      return;
+    }
+
+    console.log(edits);
+    console.log(id);
+    var sql = "UPDATE papers SET title = ?, citation = ?, abstract = ? WHERE id = " + pool.escape(id);
+    conn.query(sql, [edits.title, edits.citation, edits.abstract], function(err, rows){
+      if(err){
+        throw err;
+      }
+      callback(false, {status: true});
+    });
+  });
+};
+
+exports.deletePaper = function(id, callback){
+  pool.getConnection(function(err, conn){
+    if(err){
+      console.log(err);
+      callback(true);
+      return;
+    }
+
+
+    var sql = "DELETE FROM papers WHERE id = ?";
+    conn.query(sql, [id], function(err, rows){
+      if(err){
+        throw err;
+      }
+      callback(false, {});
+    });
+  });
+};
+
 exports.updateViewcount = function(id, callback){
   pool.getConnection(function(err, conn){
     if(err){
